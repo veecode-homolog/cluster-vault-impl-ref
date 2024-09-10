@@ -27,7 +27,10 @@ jobs:
           secrets: |
               aws/creds/vaultAction access_key | AWS_ACCESS_KEY_ID ;
               aws/creds/vaultAction secret_key | AWS_SECRET_ACCESS_KEY ;  
-      - run: sleep 10
+
+      - name: Sleep
+        run: sleep 10
+
       - name: Configure AWS Credentials
         uses: aws-actions/configure-aws-credentials@v4
         with:
