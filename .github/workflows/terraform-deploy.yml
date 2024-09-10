@@ -18,7 +18,7 @@ jobs:
             .terraform.lock.hcl
             plan.cache
           key: terraform-lock-${{ github.head_ref || github.ref_name }}
-
+      - run: sleep 2
       - name: Import AWS Secrets
         uses: hashicorp/vault-action@v2
         with:
