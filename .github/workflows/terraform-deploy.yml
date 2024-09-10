@@ -25,8 +25,8 @@ jobs:
           url: https://vault.apr.vee.codes
           token: ${{ secrets.VAULT_TOKEN }}
           secrets: |
-              aws/creds/vaultAction access_key | AWS_ACCESS_KEY_ID ;
-              aws/creds/vaultAction secret_key | AWS_SECRET_ACCESS_KEY ;  
+              aws/sts/vaultAction access_key | AWS_ACCESS_KEY_ID ;
+              aws/sts/vaultAction secret_key | AWS_SECRET_ACCESS_KEY ;  
 
       - name: Sleep
         run: sleep 10
