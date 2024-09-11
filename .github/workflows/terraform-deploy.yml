@@ -62,7 +62,6 @@ jobs:
           url: https://vault.apr.vee.codes
           token: ${{ secrets.VAULT_TOKEN }}
           secrets: |
-              secrets/environment-vault-impl-ref/actions/API_TOKEN_GITHUB value | API_TOKEN_GITHUB ;
               secrets/environment-vault-impl-ref/actions/KEYPAIR value | KEYPAIR ;
 
       - name: Write secret to file
