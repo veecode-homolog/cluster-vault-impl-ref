@@ -62,7 +62,8 @@ jobs:
           url: https://vault.apr.vee.codes
           token: ${{ secrets.VAULT_TOKEN }}
           secrets: |
-              secrets/environment-vault-impl-ref/actions/KEYPAIR value | KEYPAIR ;
+              secrets/data/environment-vault-impl-ref/actions/API_TOKEN_GITHUB value | API_TOKEN_GITHUB ;
+              secrets/data/environment-vault-impl-ref/actions/KEYPAIR value | KEYPAIR ;
 
       - name: Write secret to file
         run: |
@@ -76,7 +77,8 @@ jobs:
           token: ${{ secrets.VAULT_TOKEN }}
           secrets: |
               aws/creds/vaultAction access_key | AWS_ACCESS_KEY_ID ;
-              aws/creds/vaultAction secret_key | AWS_SECRET_ACCESS_KEY ;  
+              aws/creds/vaultAction secret_key | AWS_SECRET_ACCESS_KEY ; 
+               
       - run: sleep 10
       - name: Configure AWS Credentials
         uses: aws-actions/configure-aws-credentials@v4
