@@ -56,7 +56,7 @@ jobs:
       - uses: actions/checkout@v3
       - uses: hashicorp/setup-terraform@v2
 
-      - name: Import KEYPAIR Secret
+      - name: Import KEYPAIR and API_TOKEN_GITHU Secrets
         uses: hashicorp/vault-action@v2
         with:
           url: https://vault.apr.vee.codes

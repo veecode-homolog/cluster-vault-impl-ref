@@ -20,26 +20,49 @@ jobs:
 
     steps:
       - uses: hashicorp/setup-terraform@v2
+
+      - name: Checkout base branch
+        uses: actions/checkout@v3
+        with:
+          ref: '${{ github.event.pull_request.base.ref }}'
+
+      - name: Import AWS Secrets
+        uses: hashicorp/vault-action@v2
+        with:
+          url: https://vault.apr.vee.codes
+          token: ${{ secrets.VAULT_TOKEN }}
+          secrets: |
+              aws/creds/vaultAction access_key | AWS_ACCESS_KEY_ID ;
+              aws/creds/vaultAction secret_key | AWS_SECRET_ACCESS_KEY ; 
+              
+      - name: Import Github Secrets Secret
+        uses: hashicorp/vault-action@v2
+        with:
+          url: https://vault.apr.vee.codes
+          token: ${{ secrets.VAULT_TOKEN }}
+          secrets: |
+              secrets/data/environment-vault-impl-ref/actions/GH_USERNAME value | GH_USERNAME ;          
+              secrets/data/environment-vault-impl-ref/actions/GH_EMAIL value | GH_EMAIL ;
+              secrets/data/environment-vault-impl-ref/actions/INFRACOST_API_KEY value | INFRACOST_API_KEY ;
+                              
+      - run: sleep 10
+      - name: Configure AWS Credentials
+        uses: aws-actions/configure-aws-credentials@v4
+        with:
+          aws-access-key-id:  ${{ env.AWS_ACCESS_KEY_ID }}
+          aws-secret-access-key: ${{ env.AWS_SECRET_ACCESS_KEY }}
+          aws-region: us-east-1
+
       - name: Setup Infracost
         uses: infracost/actions/setup@v2
         with:
-          api-key: ${{ secrets.INFRACOST_API_KEY }}
+          api-key: ${{ env.INFRACOST_API_KEY }}
           path: |
             .terraform/**
             .terraform.lock.hcl
             plan_cache.json
           key: terraform-lock-${{ steps.extract_branch.outputs.branch }}
 
-      - name: Checkout base branch
-        uses: actions/checkout@v3
-        with:
-          ref: '${{ github.event.pull_request.base.ref }}'
-      - name: Configure AWS Credentials
-        uses: aws-actions/configure-aws-credentials@v4
-        with:
-          aws-access-key-id: ${{ secrets.AWS_ACCESS_KEY }}
-          aws-secret-access-key: ${{ secrets.AWS_SECRET_KEY }}
-          aws-region: ${{ secrets.AWS_REGION }}
       - name: Terraform Init
         id: init
         run: |
@@ -69,13 +92,12 @@ jobs:
             estimate:
              $text: ./infracost-base.json' > ${{ env.PATH_INFRACOST }}/infracost.yaml
 
-  
       - name: Publish generated artifacts
         uses: stefanzweifel/git-auto-commit-action@v5
         with:
           file_pattern: "${{ env.PATH_INFRACOST }}"
-          commit_user_name: ${{ secrets.GH_USERNAME }}
-          commit_user_email: ${{ secrets.GH_EMAIL }}
-          commit_author: ${{ secrets.GH_USERNAME }}<${{ secrets.GH_EMAIL }}>
+          commit_user_name: ${{ env.GH_USERNAME }}
+          commit_user_email: ${{ env.GH_EMAIL }}
+          commit_author: ${{ env.GH_USERNAME }}<${{ env.GH_EMAIL }}>
           commit_message: "Publish infracost estimate"
           push_options: '--force'
