@@ -29,7 +29,7 @@ jobs:
 
       - name: Start Instance
         run: |
-          ID_INSTANCE=`aws ec2 describe-instances --filters "Name=tag-key,Values=Name" "Name=tag-value,Values=cluster-vault-impl-ref" "Name=instance-state-name,Values=running" --query "Reservations[*].Instances[*].InstanceId" --output text`
+          ID_INSTANCE=`aws ec2 describe-instances --filters "Name=tag-key,Values=Name" "Name=tag-value,Values=cluster-vault-impl-ref" "Name=instance-state-name,Values=stopped" --query "Reservations[*].Instances[*].InstanceId" --output text`
           echo "Start Instance cluster-vault-impl-ref"
           aws ec2 start-instances --instance-ids $ID_INSTANCE
 
