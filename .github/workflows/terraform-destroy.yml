@@ -54,15 +54,6 @@ jobs:
             plan.cache
           key: terraform-lock-${{ github.event.workflow_run.head_branch }}
 
-      - name: Import AWS Secrets
-        uses: hashicorp/vault-action@v2
-        with:
-          url: https://vault.apr.vee.codes
-          token: ${{ secrets.VAULT_TOKEN }}
-          secrets: |
-              aws/creds/vaultAction access_key | AWS_ACCESS_KEY_ID ;
-              aws/creds/vaultAction secret_key | AWS_SECRET_ACCESS_KEY ; 
-
       - name: Import GRAFANA_API_TOKEN Secret
         uses: hashicorp/vault-action@v2
         with:
@@ -71,14 +62,11 @@ jobs:
           secrets: |
               secrets/data/environment-vault-impl-ref/actions/GRAFANA_API_TOKEN value | GRAFANA_API_TOKEN ;
               
-      - name: Sleep
-        run: sleep 10
-
       - name: Configure AWS Credentials
         uses: aws-actions/configure-aws-credentials@v4
         with:
-          aws-access-key-id:  ${{ env.AWS_ACCESS_KEY_ID }}
-          aws-secret-access-key: ${{ env.AWS_SECRET_ACCESS_KEY }}
+          aws-access-key-id:  ${{ needs.init.outputs.AWS_ACCESS_KEY_ID }}
+          aws-secret-access-key: ${{ needs.init.outputs.AWS_SECRET_ACCESS_KEY }}
           aws-region: us-east-1
 
       - name: Terraform destroy 

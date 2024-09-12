@@ -70,21 +70,11 @@ jobs:
           echo "${{ env.KEYPAIR }}" > cert.pem
           chmod 600 cert.pem
           
-      - name: Import AWS Secrets
-        uses: hashicorp/vault-action@v2
-        with:
-          url: https://vault.apr.vee.codes
-          token: ${{ secrets.VAULT_TOKEN }}
-          secrets: |
-              aws/creds/vaultAction access_key | AWS_ACCESS_KEY_ID ;
-              aws/creds/vaultAction secret_key | AWS_SECRET_ACCESS_KEY ; 
-               
-      - run: sleep 10
       - name: Configure AWS Credentials
         uses: aws-actions/configure-aws-credentials@v4
         with:
-          aws-access-key-id:  ${{ env.AWS_ACCESS_KEY_ID }}
-          aws-secret-access-key: ${{ env.AWS_SECRET_ACCESS_KEY }}
+          aws-access-key-id:  ${{ needs.apply.outputs.AWS_ACCESS_KEY_ID }}
+          aws-secret-access-key: ${{ needs.apply.outputs.AWS_SECRET_ACCESS_KEY }}
           aws-region: us-east-1
 
       - name: Waiting for cluster to be ready
@@ -152,20 +142,11 @@ jobs:
     needs: kubeconfig
     steps:
       - uses: actions/checkout@v3
-      - name: Import AWS Secrets
-        uses: hashicorp/vault-action@v2
-        with:
-          url: https://vault.apr.vee.codes
-          token: ${{ secrets.VAULT_TOKEN }}
-          secrets: |
-              aws/creds/vaultAction access_key | AWS_ACCESS_KEY_ID ;
-              aws/creds/vaultAction secret_key | AWS_SECRET_ACCESS_KEY ; 
-      - run: sleep 10
       - name: Configure AWS Credentials
         uses: aws-actions/configure-aws-credentials@v4
         with:
-          aws-access-key-id:  ${{ env.AWS_ACCESS_KEY_ID }}
-          aws-secret-access-key: ${{ env.AWS_SECRET_ACCESS_KEY }}
+          aws-access-key-id:  ${{ needs.apply.outputs.AWS_ACCESS_KEY_ID }}
+          aws-secret-access-key: ${{ needs.apply.outputs.AWS_SECRET_ACCESS_KEY }}
           aws-region: us-east-1
 
     ### Usin k8s context
@@ -214,20 +195,12 @@ jobs:
     needs: kubeconfig
     steps:
       - uses: actions/checkout@v3
-      - name: Import AWS Secrets
-        uses: hashicorp/vault-action@v2
-        with:
-          url: https://vault.apr.vee.codes
-          token: ${{ secrets.VAULT_TOKEN }}
-          secrets: |
-              aws/creds/vaultAction access_key | AWS_ACCESS_KEY_ID ;
-              aws/creds/vaultAction secret_key | AWS_SECRET_ACCESS_KEY ; 
-      - run: sleep 10
+
       - name: Configure AWS Credentials
         uses: aws-actions/configure-aws-credentials@v4
         with:
-          aws-access-key-id:  ${{ env.AWS_ACCESS_KEY_ID }}
-          aws-secret-access-key: ${{ env.AWS_SECRET_ACCESS_KEY }}
+          aws-access-key-id:  ${{ needs.apply.outputs.AWS_ACCESS_KEY_ID }}
+          aws-secret-access-key: ${{ needs.apply.outputs.AWS_SECRET_ACCESS_KEY }}
           aws-region: us-east-1
 
       - name: Import GRAFANA_API_TOKEN Secret
