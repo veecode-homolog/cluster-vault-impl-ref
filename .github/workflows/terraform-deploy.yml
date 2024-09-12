@@ -33,7 +33,10 @@ jobs:
               aws/creds/vaultAction secret_key | AWS_SECRET_ACCESS_KEY ; 
 
       - name: Sleep
-        run: sleep 10
+        run: |
+          sleep 10
+          echo "AWS_ACCESS_KEY_ID=${{ env.AWS_ACCESS_KEY_ID }}" >> "$GITHUB_OUTPUT"
+          echo "AWS_SECRET_ACCESS_KEY=${{ env.AWS_SECRET_ACCESS_KEY }}" >> "$GITHUB_OUTPUT"
 
       - name: Configure AWS Credentials
         uses: aws-actions/configure-aws-credentials@v4
