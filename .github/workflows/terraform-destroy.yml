@@ -17,6 +17,7 @@ jobs:
             plan.cache
           key: terraform-lock-${{ github.head_ref || github.ref_name }}
       - name: Import AWS Secrets
+        id: import-aws-secrets
         uses: hashicorp/vault-action@v2
         with:
           url: https://vault.apr.vee.codes
@@ -65,8 +66,8 @@ jobs:
       - name: Configure AWS Credentials
         uses: aws-actions/configure-aws-credentials@v4
         with:
-          aws-access-key-id:  ${{ needs.init.outputs.AWS_ACCESS_KEY_ID }}
-          aws-secret-access-key: ${{ needs.init.outputs.AWS_SECRET_ACCESS_KEY }}
+          aws-access-key-id:  ${{ needs.init.outputs.import-aws-secrets.AWS_ACCESS_KEY_ID }}
+          aws-secret-access-key: ${{ needs.init.outputs.import-aws-secrets.AWS_SECRET_ACCESS_KEY }}
           aws-region: us-east-1
 
       - name: Terraform destroy 
