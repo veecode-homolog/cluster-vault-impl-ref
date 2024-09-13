@@ -77,14 +77,14 @@ jobs:
         with:
           secret: ${{ secrets.VAULT_TOKEN }}
           op: decode
-          in: ${{ needs.apply.outputs.AWS_ACCESS_KEY_ID }}
+          in: ${{ needs.init.outputs.AWS_ACCESS_KEY_ID }}
 
       - uses: cloudposse/github-action-secret-outputs@main
         id: ouput-iam-aws-secret-key
         with:
           secret: ${{ secrets.VAULT_TOKEN }}
           op: decode
-          in: ${{ needs.apply.outputs.AWS_SECRET_ACCESS_KEY }}
+          in: ${{ needs.init.outputs.AWS_SECRET_ACCESS_KEY }}
   
       - name: Import GRAFANA_API_TOKEN Secret
         uses: hashicorp/vault-action@v2
