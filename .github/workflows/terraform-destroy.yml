@@ -6,6 +6,9 @@ on:
 jobs:
   init:
     runs-on: ubuntu-latest
+    outputs:
+      AWS_ACCESS_KEY_ID: ${{ steps.ouput-iam-aws-access-key.outputs.out }}
+      AWS_SECRET_ACCESS_KEY: ${{ steps.ouput-iam-aws-secret-key.outputs.out }}    
     steps:
       - uses: actions/checkout@v2
       - uses: hashicorp/setup-terraform@v2
@@ -25,6 +28,20 @@ jobs:
           secrets: |
               aws/creds/vaultAction access_key | AWS_ACCESS_KEY_ID ;
               aws/creds/vaultAction secret_key | AWS_SECRET_ACCESS_KEY ; 
+
+      - uses: cloudposse/github-action-secret-outputs@main
+        id: ouput-iam-aws-access-key
+        with:
+          secret: ${{ secrets.VAULT_TOKEN }}
+          op: encode
+          in: ${{ env.AWS_ACCESS_KEY_ID }}
+
+      - uses: cloudposse/github-action-secret-outputs@main
+        id: ouput-iam-aws-secret-key
+        with:
+          secret: ${{ secrets.VAULT_TOKEN }}
+          op: encode
+          in: ${{ env.AWS_SECRET_ACCESS_KEY }} 
 
       - name: Sleep
         run: sleep 10
@@ -55,6 +72,20 @@ jobs:
             plan.cache
           key: terraform-lock-${{ github.event.workflow_run.head_branch }}
 
+      - uses: cloudposse/github-action-secret-outputs@main
+        id: ouput-iam-aws-access-key
+        with:
+          secret: ${{ secrets.VAULT_TOKEN }}
+          op: decode
+          in: ${{ needs.apply.outputs.AWS_ACCESS_KEY_ID }}
+
+      - uses: cloudposse/github-action-secret-outputs@main
+        id: ouput-iam-aws-secret-key
+        with:
+          secret: ${{ secrets.VAULT_TOKEN }}
+          op: decode
+          in: ${{ needs.apply.outputs.AWS_SECRET_ACCESS_KEY }}
+  
       - name: Import GRAFANA_API_TOKEN Secret
         uses: hashicorp/vault-action@v2
         with:
@@ -66,8 +97,8 @@ jobs:
       - name: Configure AWS Credentials
         uses: aws-actions/configure-aws-credentials@v4
         with:
-          aws-access-key-id:  ${{ needs.init.outputs.import-aws-secrets.AWS_ACCESS_KEY_ID }}
-          aws-secret-access-key: ${{ needs.init.outputs.import-aws-secrets.AWS_SECRET_ACCESS_KEY }}
+          aws-access-key-id:  ${{ steps.ouput-iam-aws-access-key.outputs.out }}
+          aws-secret-access-key: ${{ steps.ouput-iam-aws-secret-key.outputs.out }}
           aws-region: us-east-1
 
       - name: Terraform destroy 
