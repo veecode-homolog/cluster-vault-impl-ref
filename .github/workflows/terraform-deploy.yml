@@ -172,7 +172,7 @@ jobs:
 
   ingress-apply:
     runs-on: ubuntu-latest
-    needs: kubeconfig
+    needs: [apply, kubeconfig]
     steps:
       - uses: actions/checkout@v3
 
@@ -240,7 +240,7 @@ jobs:
 
   instrumentation-apply:
     runs-on: ubuntu-latest
-    needs: kubeconfig
+    needs: [apply, kubeconfig]
     steps:
       - uses: actions/checkout@v3
 
