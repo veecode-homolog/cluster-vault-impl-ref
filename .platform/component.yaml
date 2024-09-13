@@ -9,7 +9,7 @@ metadata:
     certificate_account_email: platformss@vee.codes
     certificate_environment_type: staging
     grafana_obs_api: https://grafana.homolog-central-otlp.vkpr.platform.vee.codes
-    public_ip: 98.83.46.203
+    public_ip: 44.221.165.51
   annotations:
     github.com/project-slug: veecode-homolog/cluster-vault-impl-ref
     grafana/dashboard-selector: cluster-vault-impl-ref
@@ -17,7 +17,7 @@ metadata:
     infracost/project: cluster-vault-impl-ref
     backstage.io/techdocs-ref: dir:..
     github.com/workflows: terraform-deploy.yml,start-instance.yml,stop-instance.yml,kubeconfig.yml,terraform-destroy.yml,infracost.yml
-    cluster/instructions: "# Run the following commands to import the kubeconfig:\n  ssh -i ./cert.pem -o StrictHostKeyChecking=no $USERNAME@$98.83.46.203 \"mkdir -p .kube && k3d kubeconfig get k3s > ~/.kube/config\"\n  scp -i ./cert.pem $USERNAME@$98.83.46.203:~/.kube/config ~/.kube/config-cluster-vault-impl-ref\n  yq -e 'del(.clusters[0].cluster.certificate-authority-data) | .clusters[0].cluster.insecure-skip-tls-verify=true | .clusters[].cluster.server |= sub(\"0.0.0.0\", \"98.83.46.203\")' -i ~/.kube/config-cluster-vault-impl-ref\n  export KUBECONFIG=~/.kube/config-cluster-vault-impl-ref\n  kubectl get pods -A\n"
+    cluster/instructions: "# Run the following commands to import the kubeconfig:\n  ssh -i ./cert.pem -o StrictHostKeyChecking=no $USERNAME@$44.221.165.51 \"mkdir -p .kube && k3d kubeconfig get k3s > ~/.kube/config\"\n  scp -i ./cert.pem $USERNAME@$44.221.165.51:~/.kube/config ~/.kube/config-cluster-vault-impl-ref\n  yq -e 'del(.clusters[0].cluster.certificate-authority-data) | .clusters[0].cluster.insecure-skip-tls-verify=true | .clusters[].cluster.server |= sub(\"0.0.0.0\", \"44.221.165.51\")' -i ~/.kube/config-cluster-vault-impl-ref\n  export KUBECONFIG=~/.kube/config-cluster-vault-impl-ref\n  kubectl get pods -A\n"
 spec:
   type: ec2
   lifecycle: experimental
