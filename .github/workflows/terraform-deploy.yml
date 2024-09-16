@@ -359,58 +359,79 @@ jobs:
         run: |
           helm upgrade --install loki grafana/loki-stack --version 2.9.11 -f loki.yaml -n vkpr --create-namespace
 
-      # Getting the UID from datasources
-      - name: Getting uid from Prometheus datasource
-        continue-on-error: true
+      - name: Add External Secrets Operator Helm repository
         run: |
-          export UID_METRICS_DASHBOARD=$(curl -k -H "Authorization: Bearer ${{ env.GRAFANA_API_TOKEN }}" --url https://grafana.homolog-central-otlp.vkpr.platform.vee.codes/api/datasources | jq '.[] | select(.type == "prometheus")'.uid)
-          echo "UID_METRICS = $UID_METRICS_DASHBOARD" 
-          if [ -z "$UID_METRICS_DASHBOARD" ]; then
-              echo "Error: The UID is empty. There may have been an issue."
-              exit 1
-          else
-              echo "UID found: $UID_METRICS_DASHBOARD"
-          fi          
-          echo "UID_METRICS=$UID_METRICS_DASHBOARD" >> $GITHUB_ENV
+          helm repo add external-secrets https://godaddy.github.io/kubernetes-external-secrets/
+          helm repo update
+  
+      - name: Install External Secrets Operator
+        run: |
+          helm install external-secrets \
+            external-secrets/external-secrets \
+              -n external-secret \
+              --create-namespace \
+              --set installCRDs=true \
+              --wait          
 
-      # Change UID from defaults dashboard
-      - name: Changing uid of dashboard from Prometheus
-        continue-on-error: true
+      - name: Apply SecretStore from ESO 
         run: |
-          jq '(.dashboard.panels[].datasource | select(.type == "prometheus")).uid |= ${{ env.UID_METRICS }}' "dashboard-overview.json" > cluster-vault-impl-ref-dashboard-overview.json
-          cat cluster-vault-impl-ref-dashboard-overview.json
+          kubectl apply -f secret-store.yaml -n external-secret
+          kubectl create secret generic vault-token \
+            --from-literal=token=${{ secrets.VAULT_TOKEN }} \
+            -n external-secret
 
-      #DELETE old Dashboards on Grafana API
-      - name: Delete old Dashboards from project
-        continue-on-error: true
-        run: |
-          TAG="cluster-vault-impl-ref"
-          # Passo 1: Verificar se existem painéis com a tag específica
-          response=$(curl -k -s -o /dev/null -w "%{http_code}" -X GET "https://grafana.homolog-central-otlp.vkpr.platform.vee.codes/api/search?tag=${TAG}" -H "Authorization: Bearer ${{ env.GRAFANA_API_TOKEN }}")
-          if [ "$response" -ne 200 ]; then
-              echo "Não foram encontrados painéis com a tag '${TAG}'. Nenhum painel será excluído."
-              exit 0
-          fi
-          # Passo 2: Obter lista de UIDs dos painéis com a tag específica
-          panel_uids=$(curl -k -s -X GET "https://grafana.homolog-central-otlp.vkpr.platform.vee.codes/api/search?tag=${TAG}" -H "Authorization: Bearer ${{ env.GRAFANA_API_TOKEN }}" | jq -r '.[] | .uid')
+      # # Getting the UID from datasources
+      # - name: Getting uid from Prometheus datasource
+      #   continue-on-error: true
+      #   run: |
+      #     export UID_METRICS_DASHBOARD=$(curl -k -H "Authorization: Bearer ${{ env.GRAFANA_API_TOKEN }}" --url https://grafana.homolog-central-otlp.vkpr.platform.vee.codes/api/datasources | jq '.[] | select(.type == "prometheus")'.uid)
+      #     echo "UID_METRICS = $UID_METRICS_DASHBOARD" 
+      #     if [ -z "$UID_METRICS_DASHBOARD" ]; then
+      #         echo "Error: The UID is empty. There may have been an issue."
+      #         exit 1
+      #     else
+      #         echo "UID found: $UID_METRICS_DASHBOARD"
+      #     fi          
+      #     echo "UID_METRICS=$UID_METRICS_DASHBOARD" >> $GITHUB_ENV
+
+      # # Change UID from defaults dashboard
+      # - name: Changing uid of dashboard from Prometheus
+      #   continue-on-error: true
+      #   run: |
+      #     jq '(.dashboard.panels[].datasource | select(.type == "prometheus")).uid |= ${{ env.UID_METRICS }}' "dashboard-overview.json" > cluster-vault-impl-ref-dashboard-overview.json
+      #     cat cluster-vault-impl-ref-dashboard-overview.json
+
+      # #DELETE old Dashboards on Grafana API
+      # - name: Delete old Dashboards from project
+      #   continue-on-error: true
+      #   run: |
+      #     TAG="cluster-vault-impl-ref"
+      #     # Passo 1: Verificar se existem painéis com a tag específica
+      #     response=$(curl -k -s -o /dev/null -w "%{http_code}" -X GET "https://grafana.homolog-central-otlp.vkpr.platform.vee.codes/api/search?tag=${TAG}" -H "Authorization: Bearer ${{ env.GRAFANA_API_TOKEN }}")
+      #     if [ "$response" -ne 200 ]; then
+      #         echo "Não foram encontrados painéis com a tag '${TAG}'. Nenhum painel será excluído."
+      #         exit 0
+      #     fi
+      #     # Passo 2: Obter lista de UIDs dos painéis com a tag específica
+      #     panel_uids=$(curl -k -s -X GET "https://grafana.homolog-central-otlp.vkpr.platform.vee.codes/api/search?tag=${TAG}" -H "Authorization: Bearer ${{ env.GRAFANA_API_TOKEN }}" | jq -r '.[] | .uid')
           
-          # Passo 3: Excluir cada painel obtido no passo 1
-          for panel_uid in $panel_uids; do
-              response=$(curl -k -s -o /dev/null -w "%{http_code}" -X DELETE "https://grafana.homolog-central-otlp.vkpr.platform.vee.codes/api/dashboards/uid/${panel_uid}" -H "Authorization: Bearer ${{ env.GRAFANA_API_TOKEN }}")
-              if [ "$response" -eq 200 ]; then
-                  echo "Painel com ID ${panel_uid} excluído com sucesso."
-              else
-                  echo "Erro ao excluir o painel com UID ${panel_uid}. Status code: ${response}"
-              fi
-          done
+      #     # Passo 3: Excluir cada painel obtido no passo 1
+      #     for panel_uid in $panel_uids; do
+      #         response=$(curl -k -s -o /dev/null -w "%{http_code}" -X DELETE "https://grafana.homolog-central-otlp.vkpr.platform.vee.codes/api/dashboards/uid/${panel_uid}" -H "Authorization: Bearer ${{ env.GRAFANA_API_TOKEN }}")
+      #         if [ "$response" -eq 200 ]; then
+      #             echo "Painel com ID ${panel_uid} excluído com sucesso."
+      #         else
+      #             echo "Erro ao excluir o painel com UID ${panel_uid}. Status code: ${response}"
+      #         fi
+      #     done
           
-      #POST Dashboards on Grafana API
-      - name: Post Overview dashboard
-        continue-on-error: true
-        run: |
-          curl -k -X POST -d @cluster-vault-impl-ref-dashboard-overview.json \
-          -H "Accept: application/json" \
-          -H "Content-Type: application/json" \
-          -H "Authorization: Bearer ${{ env.GRAFANA_API_TOKEN }}" \
-          --url https://grafana.homolog-central-otlp.vkpr.platform.vee.codes/api/dashboards/db
+      # #POST Dashboards on Grafana API
+      # - name: Post Overview dashboard
+      #   continue-on-error: true
+      #   run: |
+      #     curl -k -X POST -d @cluster-vault-impl-ref-dashboard-overview.json \
+      #     -H "Accept: application/json" \
+      #     -H "Content-Type: application/json" \
+      #     -H "Authorization: Bearer ${{ env.GRAFANA_API_TOKEN }}" \
+      #     --url https://grafana.homolog-central-otlp.vkpr.platform.vee.codes/api/dashboards/db
 
