@@ -361,7 +361,7 @@ jobs:
 
       - name: Add External Secrets Operator Helm repository
         run: |
-          helm repo add external-secrets https://godaddy.github.io/kubernetes-external-secrets/
+          helm repo add external-secrets https://charts.external-secrets.io
           helm repo update
   
       - name: Install External Secrets Operator
