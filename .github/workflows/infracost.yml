@@ -1,11 +1,6 @@
 name: infracost estimate
 
 on:
-  push:
-    branches:
-      - "*"
-      - "*/*"
-      - "**"
   workflow_dispatch: 
 env:
   PATH_INFRACOST: ./.platform
