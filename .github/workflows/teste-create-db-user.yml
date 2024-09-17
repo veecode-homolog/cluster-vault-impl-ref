@@ -83,7 +83,7 @@ jobs:
 
       - name: Connect to RDS
         run: |
-            psql -U ${{ env.DATABASE_USERNAME }} -W ${{ env.DATABASE_PASSWORD }} -h ${{ env.RDS_HOST }} -p 5432 -d postgres -c "CREATE DATABASE mydatabase;"
+            psql -U "${{ env.DATABASE_USERNAME }}" -W "${{ env.DATABASE_PASSWORD }}" -h "${{ env.RDS_HOST }}" -p 5432 -d postgres -c "CREATE DATABASE mydatabase;"
 
       - name: Create User and Grant Permissions
         run: |
@@ -91,4 +91,4 @@ jobs:
             kubectl apply -f psql-example-es.yaml -n external-secret
             sleep 1
             APPLICATION_DB_USERNAME=$(kubectl get secret psql-example-for-use -n external-secret -o jsonpath="{.data.username}" | base64 --decode)
-            psql -U ${{ env.DATABASE_USERNAME }} -W ${{ env.DATABASE_PASSWORD }} -h ${{ env.RDS_HOST }} -p 5432 -d mydatabase -c "GRANT ALL PRIVILEGES ON DATABASE mydatabase TO $APPLICATION_DB_USERNAME;"          
+            psql -U "${{ env.DATABASE_USERNAME }}" -W "${{ env.DATABASE_PASSWORD }}" -h "${{ env.RDS_HOST }}" -p 5432 -d mydatabase -c "GRANT ALL PRIVILEGES ON DATABASE mydatabase TO $APPLICATION_DB_USERNAME;"          
