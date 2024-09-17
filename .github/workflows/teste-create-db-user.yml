@@ -77,20 +77,18 @@ jobs:
             database/creds/rds-vault-impl-ref-vaultActions password | DATABASE_PASSWORD ;       
                
       - name: Set up PostgreSQL
-        uses: docker/setup-postgres@v1
-        with:
-          postgres-version: '13'
-          postgres-user: ${{ env.DATABASE_USERNAME }}
-          postgres-password: ${{ env.DATABASE_PASSWORD }}            
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y postgresql-client
 
       - name: Connect to RDS
         run: |
-            psql -h ${{ env.RDS_HOST }} -U ${{ env.DATABASE_USERNAME }} -p <RDS_PORT> -d postgres -c "CREATE DATABASE mydatabase;"
+            psql -U ${{ env.DATABASE_USERNAME }} -P ${{ env.DATABASE_PASSWORD }} -h $RDS_HOST -p 5432 -d postgres -c "CREATE DATABASE mydatabase;"
 
       - name: Create User and Grant Permissions
         run: |
             kubectl apply -f vault-dynamic-secret-db.yml -n external-secret
             kubectl apply -f psql-example-es.yaml -n external-secret
+            sleep 1
             APPLICATION_DB_USERNAME=$(kubectl get secret psql-example-for-use -n external-secret -o jsonpath="{.data.username}" | base64 --decode)
-            APPLICATION_DB_PASSWORD=$(kubectl get secret psql-example-for-use -n external-secret -o jsonpath="{.data.password}" | base64 --decode)
             psql -U ${{ env.DATABASE_USERNAME }} -d mydatabase -c "GRANT ALL PRIVILEGES ON DATABASE mydatabase TO $APPLICATION_DB_USERNAME;"          
