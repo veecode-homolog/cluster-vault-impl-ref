@@ -1,0 +1,96 @@
+name: teste-create-db-user
+
+on:
+  workflow_dispatch:
+env:
+  PORT: 6550
+  USERNAME: ec2-user
+  RDS_HOST: rds-vault-impl-ref.cpzxdcn9a81i.us-east-1.rds.amazonaws.com
+jobs:
+  kubeconfig:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v3
+
+      - name: Import AWS Secrets
+        uses: hashicorp/vault-action@v2
+        with:
+          url: https://vault.apr.vee.codes
+          token: ${{ secrets.VAULT_TOKEN }}
+          secrets: |
+              aws/creds/vaultAction access_key | AWS_ACCESS_KEY_ID ;
+              aws/creds/vaultAction secret_key | AWS_SECRET_ACCESS_KEY ; 
+
+      - name: Import KEYPAIR Secret
+        uses: hashicorp/vault-action@v2
+        with:
+          url: https://vault.apr.vee.codes
+          token: ${{ secrets.VAULT_TOKEN }}
+          secrets: |
+              secrets/data/environment-vault-impl-ref/actions/KEYPAIR value | KEYPAIR ;
+
+      - run: sleep 10
+      - name: Configure AWS Credentials
+        uses: aws-actions/configure-aws-credentials@v4
+        with:
+          aws-access-key-id:  ${{ env.AWS_ACCESS_KEY_ID }}
+          aws-secret-access-key: ${{ env.AWS_SECRET_ACCESS_KEY }}
+          aws-region: us-east-1
+
+      - name: Write secret to file
+        run: |
+          echo "${{ env.KEYPAIR }}" > cert.pem
+          chmod 600 cert.pem
+
+      - name: Waiting for cluster to be ready
+        run: |
+          HOST=`aws ec2 describe-instances --filters 'Name=tag:Name,Values=cluster-vault-impl-ref' --output text --query 'Reservations[*].Instances[*].PublicIpAddress'`
+          while ! nc -z $HOST $PORT; do
+            echo "waiting for cluster to be ready..."
+            sleep 2
+          done
+          echo "Cluster Ready!"
+          echo "Host=$HOST" >> $GITHUB_ENV
+      
+      - name: Generate kube config with k3d
+        run: |
+           ssh -i ./cert.pem -o StrictHostKeyChecking=no $USERNAME@${{  env.Host }} "k3d kubeconfig get k3s > config"
+ 
+      - name: Download kube config
+        run: |
+           mkdir -p ~/.kube
+           scp -i ./cert.pem -o StrictHostKeyChecking=no $USERNAME@${{ env.Host }}:config ~/.kube/config
+ 
+      - name: Print downloaded config
+        run: |  
+          CERTIFICATE=`cat  ~/.kube/config |grep certificate-authority-data `
+          sed -i "s|$CERTIFICATE|    insecure-skip-tls-verify: true|g" ~/.kube/config
+          sed -i "s|0.0.0.0|${{ env.Host }}|g" ~/.kube/config
+
+      - name: Import DATABASE Secrets
+        uses: hashicorp/vault-action@v2
+        with:
+          url: https://vault.apr.vee.codes
+          token: ${{ secrets.VAULT_TOKEN }}
+          secrets: |
+            database/creds/rds-vault-impl-ref-vaultActions username | DATABASE_USERNAME ;
+            database/creds/rds-vault-impl-ref-vaultActions password | DATABASE_PASSWORD ;       
+               
+      - name: Set up PostgreSQL
+        uses: docker/setup-postgres@v1
+        with:
+          postgres-version: '13'
+          postgres-user: ${{ env.DATABASE_USERNAME }}
+          postgres-password: ${{ env.DATABASE_PASSWORD }}            
+
+      - name: Connect to RDS
+        run: |
+            psql -h ${{ env.RDS_HOST }} -U ${{ env.DATABASE_USERNAME }} -p <RDS_PORT> -d postgres -c "CREATE DATABASE mydatabase;"
+
+      - name: Create User and Grant Permissions
+        run: |
+            kubectl apply -f vault-dynamic-secret-db.yml -n external-secret
+            kubectl apply -f psql-example-es.yaml -n external-secret
+            APPLICATION_DB_USERNAME=$(kubectl get secret psql-example-for-use -n external-secret -o jsonpath="{.data.username}" | base64 --decode)
+            APPLICATION_DB_PASSWORD=$(kubectl get secret psql-example-for-use -n external-secret -o jsonpath="{.data.password}" | base64 --decode)
+            psql -U ${{ env.DATABASE_USERNAME }} -d mydatabase -c "GRANT ALL PRIVILEGES ON DATABASE mydatabase TO $APPLICATION_DB_USERNAME;"          
