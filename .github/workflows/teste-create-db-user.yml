@@ -73,8 +73,8 @@ jobs:
           url: https://vault.apr.vee.codes
           token: ${{ secrets.VAULT_TOKEN }}
           secrets: |
-            database/creds/rds-vault-impl-ref-vaultActions username | DATABASE_USERNAME ;
-            database/creds/rds-vault-impl-ref-vaultActions password | DATABASE_PASSWORD ;       
+            database/creds/rds-vault-impl-ref-readWrite username | DATABASE_USERNAME ;
+            database/creds/rds-vault-impl-ref-readWrite password | DATABASE_PASSWORD ;       
                
       - name: Set up PostgreSQL
         run: |
