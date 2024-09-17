@@ -93,4 +93,4 @@ jobs:
             sleep 1
             APPLICATION_DB_USERNAME=$(kubectl get secret psql-example-for-use -n external-secret -o jsonpath="{.data.username}" | base64 --decode)
             export PGPASSWORD='${{ env.DATABASE_PASSWORD }}'
-            psql -U "${{ env.DATABASE_USERNAME }}" -h "${{ env.RDS_HOST }}" -p 5432 -d mydatabase -c "GRANT ALL PRIVILEGES ON DATABASE mydatabase TO $APPLICATION_DB_USERNAME;"          
+            psql -U "${{ env.DATABASE_USERNAME }}" -h "${{ env.RDS_HOST }}" -p 5432 -d mydatabase -c "GRANT ALL PRIVILEGES ON DATABASE mydatabase TO \"$APPLICATION_DB_USERNAME\";"          
