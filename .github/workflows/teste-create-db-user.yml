@@ -84,7 +84,7 @@ jobs:
       - name: Connect to RDS
         run: |
             export PGPASSWORD='${{ env.DATABASE_PASSWORD }}'
-            psql -U "${{ env.DATABASE_USERNAME }}" -h "${{ env.RDS_HOST }}" -p 5432 -d postgres -c "CREATE DATABASE mydatabase;"
+            psql -h ${{ env.RDS_HOST }} -p 5432 -U ${{ env.DATABASE_USERNAME }} -d postgresql -c "CREATE DATABASE mydatabase;"
 
       - name: Create User and Grant Permissions
         run: |
