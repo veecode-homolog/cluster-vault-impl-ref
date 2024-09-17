@@ -83,7 +83,7 @@ jobs:
 
       - name: Connect to RDS
         run: |
-            psql -U ${{ env.DATABASE_USERNAME }} -P ${{ env.DATABASE_PASSWORD }} -h $RDS_HOST -p 5432 -d postgres -c "CREATE DATABASE mydatabase;"
+            psql -U ${{ env.DATABASE_USERNAME }} -P ${{ env.DATABASE_PASSWORD }} -h ${{ env.RDS_HOST }} -p 5432 -d postgres -c "CREATE DATABASE mydatabase;"
 
       - name: Create User and Grant Permissions
         run: |
