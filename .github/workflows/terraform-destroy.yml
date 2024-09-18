@@ -23,7 +23,7 @@ jobs:
         id: import-aws-secrets
         uses: hashicorp/vault-action@v2
         with:
-          url: https://vault.apr.vee.codes
+          url: https://vault.vault-database-engine.vkpr.platform.vee.codes
           token: ${{ secrets.VAULT_TOKEN }}
           secrets: |
               aws/creds/vaultAction access_key | AWS_ACCESS_KEY_ID ;
@@ -89,7 +89,7 @@ jobs:
       - name: Import GRAFANA_API_TOKEN Secret
         uses: hashicorp/vault-action@v2
         with:
-          url: https://vault.apr.vee.codes
+          url: https://vault.vault-database-engine.vkpr.platform.vee.codes
           token: ${{ secrets.VAULT_TOKEN }}
           secrets: |
               secrets/data/environment-vault-impl-ref/actions/GRAFANA_API_TOKEN value | GRAFANA_API_TOKEN ;
